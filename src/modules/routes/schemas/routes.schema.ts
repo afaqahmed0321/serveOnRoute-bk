@@ -68,9 +68,10 @@ export class Route {
   rider:string
 
   @Prop({
-     type: [{type:String,enum:DAYS,default:[]}],
-    })
-  schedule:DAYS[]
+    type: [String],
+  })
+  schedule: string[];
+  
 
   @Prop({
      type: Boolean, 

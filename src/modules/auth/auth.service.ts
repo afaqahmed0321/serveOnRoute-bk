@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   CACHE_MANAGER,
@@ -27,10 +28,14 @@ import { verifyOtpDto } from './dto/verify-otp.dto';
 import { StripeService } from '@/helpers/stripe.hepler';
 import { WsException } from '@nestjs/websockets';
 import { TokenExpiredError } from 'jsonwebtoken';
+import { GetUserDataDto } from './dto/get-user-data.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UsersRepository } from '../users/users.repository';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly usersRepository: UsersRepository,
     private usersService: UsersService,
     private jwtService: JwtService,
     private repository: AuthRepository,
@@ -41,8 +46,8 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string): Promise<User | null> {
-    let criteria = email.includes('@') ? { email } : { phone: email };
-    let user = await this.usersService.findUserByCriteria(criteria);
+    const criteria = email.includes('@') ? { email } : { phone: email };
+    const user = await this.usersService.findUserByCriteria(criteria);
     if (!user) {
       throw new NotFoundException('User Not Exists');
     }
@@ -55,8 +60,8 @@ export class AuthService {
   async login(user: User): Promise<JwtTokensInterface> {
     // Data that needs to be signed with JWT
     const payload = await this.payload(user);
-    let criteria = user.email ? { email: user.email } : { phone: user.phone };
-    let identifier = user.email ? user.email : user.phone;
+    const criteria = user.email ? { email: user.email } : { phone: user.phone };
+    const identifier = user.email ? user.email : user.phone;
     const checkLoginToken = await this.repository.getToken(identifier);
     // if (
     //   checkLoginToken ||
@@ -71,8 +76,8 @@ export class AuthService {
       secret: process.env.JWT_SECRET_REFRESH,
     });
 
-    await this.repository.addRefreshToken(identifier, refreshToken);
-    let accessToken = this.jwtService.sign(payload);
+    // await this.repository.addRefreshToken(identifier, refreshToken);
+    const accessToken = this.jwtService.sign(payload);
     await this.usersService.updateUserByCriteria(criteria, {
       accessToken,
       isLoggedIn: true,
@@ -100,7 +105,7 @@ export class AuthService {
         secret: process.env.JWT_SECRET,
       });
       if (getPayload._id) {
-        let user = await this.usersService.findUserByUserId(getPayload._id);
+        const user = await this.usersService.findUserByUserId(getPayload._id);
         console.log(user);
         if (!user) {
           throw new WsException('User Not Exist with that Token!');
@@ -154,7 +159,7 @@ export class AuthService {
         );
       }
     }
-    let customer = await this.stripeService.createCustomer({
+    const customer = await this.stripeService.createCustomer({
       name: `${signUpUserDto.first_name} ${signUpUserDto.last_name}`,
       phone: signUpUserDto.phone,
     });
@@ -173,11 +178,11 @@ export class AuthService {
       secret: process.env.JWT_SECRET_REFRESH,
     });
     if (payload.email) {
-      await this.repository.addRefreshToken(payload.email, refreshToken);
+      // await this.repository.addRefreshToken(payload.email, refreshToken);
       await this.usersService.updateByEmail(user.email, { isLoggedIn: true });
     }
     if (payload.phone) {
-      await this.repository.addRefreshToken(payload.phone, refreshToken);
+      // await this.repository.addRefreshToken(payload.phone, refreshToken);
       await this.usersService.updateByEmail(user.phone, { isLoggedIn: true });
     }
 
@@ -194,8 +199,8 @@ export class AuthService {
     user: RequestUserInterface,
   ): Promise<string | unknown> {
     // Check if oldPassword matches user password
-    let criteria = user.email.includes('@') ? user.email : user.phone;
-    let update_criteria = user.email.includes('@')
+    const criteria = user.email.includes('@') ? user.email : user.phone;
+    const update_criteria = user.email.includes('@')
       ? { email: user.email }
       : { phone: user.phone };
     if (
@@ -229,38 +234,77 @@ export class AuthService {
     return bcrypt.hash(password, salt);
   }
 
-  async sendOtp(body: SendOtpDto): Promise<string> {
-    let user = await this.usersService.findUserByCriteria({
+
+  async getUserData(body: GetUserDataDto): Promise<User> {
+    const user = await this.usersService.findUserByCriteria({
       phone: body.phone_number,
     });
+    console.log("this is user:", user);
+    if (!user) {
+      throw new BadRequestException('User Not Found');
+    } else {
+      return user;
+    }
+  }
+
+  async updataPassword(body: UpdatePasswordDto): Promise<any> {
+
+    const { phone_number, newPassword } = body;
+
+    const user = await this.usersService.findUserByCriteria({phone: phone_number,});
+    console.log("this is user:", user);
+    console.log("this is paswordddddddddd:", newPassword);
+    
+    if (!user) {
+      throw new BadRequestException('User Not Found');
+    } 
+
+    const salt = await bcrypt.genSalt();
+    user.password = await bcrypt.hash(newPassword, salt);
+    console.log("this is hashedddd paswordddddddddd:", user.password);
+
+    await this.usersRepository.updateUser({ phone: phone_number }, user);
+
+    return { message: 'Password updated successfully', data: user };
+
+  }
+
+
+
+  async sendOtp(body: SendOtpDto): Promise<string> {
+    const user = await this.usersService.findUserByCriteria({
+      phone: body.phone_number,
+    });
+    console.log("this is userrrrr", user)
     if (!user) {
       throw new BadRequestException('User Not Found');
     }
-    return await this.twilioService.twilioSendOTP(
-      body.phone_number,
-    );
+    return await this.twilioService.twilioSendOTP(body.phone_number);
   }
 
   async verifyOTP(body: verifyOtpDto): Promise<string> {
-    let user = await this.usersService.findUserByCriteria({
+    const user = await this.usersService.findUserByCriteria({
       phone: body.phone_number,
     });
+
     if (!user) {
       throw new BadRequestException('User Not Found');
     }
-    let checkFlag = await this.twilioService.verifyOTP(
+
+    const checkFlag = await this.twilioService.verifyOTP(
       body.phone_number,
       body.OTP,
     );
-    if (checkFlag)
+
+    if (checkFlag) {
       await this.usersService.updateUserByCriteria(
         { phone: body.phone_number },
         { isVerified: true },
       );
-    else {
+      return 'OTP verification successful';
+    } else {
       throw new BadRequestException('OTP provided expired or wrong!');
     }
-    return checkFlag;
   }
 
   async forgotPasswordOtp(email: string): Promise<string> {
@@ -346,7 +390,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET_REFRESH,
     });
-    await this.repository.addRefreshToken(payload.email, refreshToken);
+    // await this.repository.addRefreshToken(payload.email, refreshToken);
 
     return {
       access_token: access_token,
@@ -376,10 +420,10 @@ export class AuthService {
         ' Token not Matched with User, Already Log Out',
       );
     }
-    let criteria = decodedUser?.email
+    const criteria = decodedUser?.email
       ? { email: decodedUser?.email }
       : { phone: decodedUser?.phone };
-    let identifier = decodedUser?.email
+    const identifier = decodedUser?.email
       ? decodedUser?.email
       : decodedUser?.phone;
 

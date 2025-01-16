@@ -30,8 +30,8 @@ export class RoutesService {
       );
     }
     let route = await this.routesRepository.createRoute(createRouteDto);
-    let waypoints = await this.getRouteWaypoints(
-      route.from_cord,
+    let waypoints = await this.getRouteWaypoints( 
+      route.from_cord, 
       route.to_cord,
     );
     if (waypoints) {

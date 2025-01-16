@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   Body,
@@ -75,12 +76,14 @@ import { CreateAdminAccess } from '@/guards/create-admin.guard';
 import { SignUpAdminDto } from './dto/signup-admin.dto';
 import SendOtpDto from './dto/send-otp.dto';
 import { verifyOtpDto } from './dto/verify-otp.dto';
+import { GetUserDataDto } from './dto/get-user-data.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 @ApiBearerAuth()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // ----------------SWAGGER-DOCS--------------------------
   @ApiCreatedResponse({
@@ -210,6 +213,8 @@ export class AuthController {
     description: SERVER_ERROR,
   })
   @ApiBody({ type: SignUpUserDto })
+
+  
   @Post('signup')
   async signup(
     @Req() req: RequestWithUserInterface,
@@ -361,11 +366,11 @@ export class AuthController {
     @Body() changeUserPasswordDto: ChangeUserPasswordDto,
     @User() user: RequestUserInterface,
   ) {
-    let res = {
+    const res = {
       status: 500,
       message: 'INTERNAL_SERVER_ERROR',
     };
-    let result = await this.authService.changePassword(
+    const result = await this.authService.changePassword(
       changeUserPasswordDto,
       user,
     );
@@ -435,13 +440,53 @@ export class AuthController {
   }
 
   @Post('send-otp')
-  sendLoginOTP(@Body() body: SendOtpDto) {
-    return this.authService.sendOtp(body);
+  async sendLoginOtp(@Body() sendOtpDto: SendOtpDto): Promise<any> {
+    try {
+      const result = await this.authService.sendOtp(sendOtpDto);
+      
+      return { message: 'OTP sent successfully', data: result };
+
+    } catch (error) {
+      // eslint-disable-next-line prettier/prettier
+      throw new BadRequestException(error.message);
+    }
   }
 
+  @Post('get-user-data')
+  async getUserData(@Body() GetUserDataDto: GetUserDataDto): Promise<any> {
+    try {
+      const result = await this.authService.getUserData(GetUserDataDto);
+      
+      return { message: 'this is user', data: result };
+
+    } catch (error) {
+      // eslint-disable-next-line prettier/prettier
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Put('update-password')
+  async updatePassword(@Body() UpdatePasswordDto: UpdatePasswordDto): Promise<any> {
+    try {
+      const result = await this.authService.updataPassword(UpdatePasswordDto);
+      
+      return { message: 'this is user', data: result };
+
+    } catch (error) {
+      // eslint-disable-next-line prettier/prettier
+      throw new BadRequestException(error.message);
+    }
+  }
+  
+
   @Patch('verify-otp')
-  verifyOtp(@Body() body: verifyOtpDto) {
-    return this.authService.verifyOTP(body);
+  async verifyOtp(@Body() verifyOtpDto: verifyOtpDto): Promise<any> {
+    try {
+      const result = await this.authService.verifyOTP(verifyOtpDto);
+      return { message: 'OTP verified successfully', data: result };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   @ApiCreatedResponse({
@@ -597,21 +642,22 @@ export class AuthController {
     },
     description: SERVER_ERROR,
   })
-  @Post('refresh-token')
-  async refreshToken(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<any> {
-    const tokens: JwtTokensInterface = await this.authService.refreshToken(
-      req.cookies['refresh-token'],
-    );
+  
+  // @Post('refresh-token')
+  // async refreshToken(
+  //   @Req() req: Request,
+  //   @Res({ passthrough: true }) res: Response,
+  // ): Promise<any> {
+  //   const tokens: JwtTokensInterface = await this.authService.refreshToken(
+  //     req.cookies['refresh-token'],
+  //   );
 
-    general_token(tokens.refresh_token, res);
-    return {
-      access_token: tokens?.access_token,
-      roles: tokens?.roles,
-    };
-  }
+  //   general_token(tokens.refresh_token, res);
+  //   return {
+  //     access_token: tokens?.access_token,
+  //     roles: tokens?.roles,
+  //   };
+  // }
 
   @Get('google/login')
   @UseGuards(AuthGuard('google'))
@@ -696,22 +742,22 @@ export class AuthController {
     },
     description: SERVER_ERROR,
   })
-  @Post('social-login/:token')
-  async getTokenForSocialLogin(
-    @Param('token') token: string,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<LoginResponseInterface> {
-    const tokens: JwtTokensInterface = await this.authService.refreshToken(
-      token,
-    );
+  // @Post('social-login/:token')
+  // async getTokenForSocialLogin(
+  //   @Param('token') token: string,
+  //   @Res({ passthrough: true }) res: Response,
+  // ): Promise<LoginResponseInterface> {
+  //   const tokens: JwtTokensInterface = await this.authService.refreshToken(
+  //     token,
+  //   );
 
-    general_token(tokens.refresh_token, res);
+  //   general_token(tokens.refresh_token, res);
 
-    return {
-      access_token: tokens.access_token,
-      roles: tokens.roles,
-    };
-  }
+  //   return {
+  //     access_token: tokens.access_token,
+  //     roles: tokens.roles,
+  //   };
+  // }
 
   @ApiCreatedResponse({
     schema: {
