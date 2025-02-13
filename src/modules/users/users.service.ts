@@ -32,7 +32,9 @@ export class UsersService {
 
   async updateUser(_id: any, data: any, req = null): Promise<any> {
     await this.usersRepository.findUserByUserId(_id);
+    
     console.log(data);
+
     if (data.avatar_file) {
       const uploadedFile = await this.uploadsService.uploadFile(
         data.avatar_file.buffer,
@@ -40,6 +42,7 @@ export class UsersService {
       );
       data.avatar = uploadedFile.Location;
     }
+
     if (data.cover_image_file) {
       const uploadedFile = await this.uploadsService.uploadFile(
         data.cover_image_file.buffer,
@@ -47,6 +50,7 @@ export class UsersService {
       );
       data.cover_image = uploadedFile.Location;
     }
+
     if (data?.national_ID_file?.length) {
       data.ID_file = [];
       for (let i = 0; i < data.national_ID_file.length; i++) {
@@ -57,6 +61,7 @@ export class UsersService {
         data.ID_file[i] = uploadedFile.Location;
       }
     }
+
     if (data?.driving_license_file?.length) {
       data.driving_license = [];
       for (let i = 0; i < data.driving_license_file.length; i++) {
@@ -68,8 +73,18 @@ export class UsersService {
       }
     }
 
+    // Handle "real_picture_file" upload
+    if (data.real_picture_file) {
+      const uploadedFile = await this.uploadsService.uploadFile(
+        data.real_picture_file.buffer,
+        Date.now() + '-' + data.real_picture_file.originalname,
+      );
+      data.real_picture = uploadedFile.Location;
+    }
+
     return this.usersRepository.updateUser({ _id: new ObjectId(_id) }, data);
-  }
+}
+
 
   async updateUserByCriteria(
     criteria: any,

@@ -53,7 +53,7 @@ export class User {
   email: string;
 
   @Prop({
-    index: true,
+    index: true, 
     type: String,
   })
   gender: string;

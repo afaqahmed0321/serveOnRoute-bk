@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { STATUS } from '@/enums/status.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -54,6 +55,12 @@ export class UpdateUserDto {
   cover_image_file?: Express.Multer.File;
 
   @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary'
+  })
+  car_picture_file?: Express.Multer.File;
+
+  @ApiPropertyOptional({
     type: 'array',
     items: {
       type: 'string',
@@ -75,6 +82,17 @@ export class UpdateUserDto {
   driving_license?: [string];
 
   cover_image: [Express.Multer.File];
+
+
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary'
+  })
+  real_picture_file?: Express.Multer.File;
+  
+  real_picture: Express.Multer.File;
+  
+
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
@@ -148,7 +166,7 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsString()
-  car_picture: string;
+  car_picture:  [Express.Multer.File];
 
   @ApiPropertyOptional({
     type: String,

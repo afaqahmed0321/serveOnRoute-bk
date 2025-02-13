@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable prettier/prettier */
 import {
   Body,
   Controller,
@@ -110,6 +112,7 @@ export class UsersController {
         { name: 'cover_image_file', maxCount: 1 },
         { name: 'national_ID_file', maxCount: 2 },
         { name: 'driving_license_file', maxCount: 2 },
+        { name: 'real_picture_file', maxCount: 1 },
         { name: 'avatar', maxCount: 1 },
         { name: 'car_picture', maxCount: 1 },
         { name: 'ID_file', maxCount: 1 },
@@ -128,6 +131,7 @@ export class UsersController {
       cover_image_file: Express.Multer.File[];
       national_ID_file: Express.Multer.File[];
       driving_license_file: Express.Multer.File[];
+      real_picture_file: Express.Multer.File[];
     },
   ) {
     data.avatar_file = files?.avatar_file?.length
@@ -142,6 +146,10 @@ export class UsersController {
     data.driving_license_file = files?.driving_license_file?.length
       ? files.driving_license_file
       : undefined;
+    data.real_picture_file = files?.real_picture_file?.length
+      ? files.real_picture_file[0]
+      : undefined; 
+
     let res = {
       status: 500,
       message: INTERNAL_SERVER_ERROR,

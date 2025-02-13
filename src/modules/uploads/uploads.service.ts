@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {Injectable} from '@nestjs/common';
 import {S3} from 'aws-sdk';
 import { ConfigService } from '@nestjs/config';
